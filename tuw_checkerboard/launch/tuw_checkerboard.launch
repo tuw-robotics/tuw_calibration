@@ -1,0 +1,18 @@
+<launch>
+  <arg name="camera_namespace" default="/camera"/>
+  <arg name="color_image" default="$(arg camera_namespace)/rgb/image_rect_color"/>
+  <arg name="image_out" default="image_out"/>
+  
+  <node name="tuw_checkerboard_node" pkg="tuw_checkerboard" type="tuw_checkerboard_node" output="screen">
+      <remap from="image" to="$(arg color_image)" />
+  </node>
+  <!--
+  <node name="input_viewer" pkg="image_view" type="image_view">
+      <remap from="image" to="$(arg color_image)" />
+      <param name="autosize" value="False" />
+  </node>
+  <node name="output_viewer" pkg="image_view" type="image_view">
+      <remap from="image" to="image_out" />
+      <param name="autosize" value="False" />
+  </node> -->
+</launch>

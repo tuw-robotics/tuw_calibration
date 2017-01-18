@@ -1,0 +1,6 @@
+<launch>
+  <arg name="laser_scan" default="base_scan"/>
+  <node name="tuw_laser2corner_node" pkg="tuw_laser2corner" type="tuw_laser2corner_node" output="screen">
+    <remap from="scan" to="$(arg laser_scan)" />
+  </node>
+</launch>
