@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(tuw_laser2corner)
+project(tuw_linedetection)
 add_compile_options(-std=c++14) ## for c++ 2014
 
 ## Find catkin macros and libraries
@@ -7,14 +7,16 @@ add_compile_options(-std=c++14) ## for c++ 2014
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  rospy
   std_msgs
-  tf
+  sensor_msgs
   tuw_geometry
   tuw_geometry_msgs
+  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -88,13 +90,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/Laser2corner.cfg
+generate_dynamic_reconfigure_options(
+   cfg/Linesegment2DDetector.cfg
 #   cfg/DynReconf2.cfg
-#)
-
-# make sure configure headers are built before any node using them
-# add_dependencies(example_node ${PROJECT_NAME}_gencfg)
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -107,8 +106,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES tuw_laser2corner
-  CATKIN_DEPENDS tf tuw_geometry tuw_geometry_msgs
+#  LIBRARIES tuw_linedetection
+  CATKIN_DEPENDS tuw_geometry tuw_geometry_msgs
 #  DEPENDS system_lib
 )
 
@@ -119,29 +118,32 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  ${catkin_INCLUDE_DIRS}
   ./include/
+  ${catkin_INCLUDE_DIRS}
+  ${PYTHON_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-# add_library(tuw_laser2corner
-#   src/${PROJECT_NAME}/tuw_laser2corner.cpp
+# add_library(tuw_linedetection
+#   src/${PROJECT_NAME}/linesegment2d_detector_node.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(tuw_laser2corner ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(tuw_linedetection ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(tuw_laser2corner_node src/laser2corner_node.cpp)
+# add_executable(tuw_linedetection_node src/tuw_linedetection_node.cpp)
+add_executable(linesegment2d_detector_node src/linesegment2d_detector_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(tuw_laser2corner_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(tuw_linedetection_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(linesegment2d_detector_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(tuw_laser2corner_node
+target_link_libraries(linesegment2d_detector_node
    ${catkin_LIBRARIES}
    tuw_geometry
    tuw_geometry_msgs
@@ -162,7 +164,7 @@ target_link_libraries(tuw_laser2corner_node
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS tuw_laser2corner tuw_laser2corner_node
+# install(TARGETS tuw_linedetection tuw_linedetection_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -187,7 +189,7 @@ target_link_libraries(tuw_laser2corner_node
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_tuw_laser2corner.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_tuw_linedetection.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

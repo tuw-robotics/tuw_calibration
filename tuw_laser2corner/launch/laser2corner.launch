@@ -1,6 +1,12 @@
 <launch>
-  <arg name="laser_scan" default="base_scan"/>
+  <arg name="laser_frame" default="/p3dx/laser_front"/>
+  <arg name="static_corner_point_tf" default="static_corner_point_tf"/>
+  <arg name="linesegments_pub" default="line_segments"/>
+  
   <node name="tuw_laser2corner_node" pkg="tuw_laser2corner" type="tuw_laser2corner_node" output="screen">
-    <remap from="scan" to="$(arg laser_scan)" />
+    <remap from="line_segments" to="$(arg linesegments_pub)" />
+    <!--<remap from="static_corner" to="$(arg static_corner_point_tf)" />-->
   </node>
+  <!-- static transform to point near the corner -->
+  <!--<node name="static_corner_point_tf" pkg="tf" type="static_transform_publisher" args="1 -1 0 0 0 0 $(arg laser_frame) $(static_corner_point_tf) 100" />-->
 </launch>
