@@ -2,11 +2,16 @@
   <arg name="laser_frame" default="/p3dx/laser_front"/>
   <arg name="static_corner_point_tf" default="static_corner_point_tf"/>
   <arg name="linesegments_pub" default="line_segments"/>
+  <arg name="corner_point_tolerance" default="0.005"/>
+  <arg name="corner_point_x" default="1"/>
+  <arg name="corner_point_y" default="-1"/>
   
   <node name="tuw_laser2corner_node" pkg="tuw_laser2corner" type="tuw_laser2corner_node" output="screen">
     <remap from="line_segments" to="$(arg linesegments_pub)" />
-    <!--<remap from="static_corner" to="$(arg static_corner_point_tf)" />-->
+    <param name="laser_frame" value="$(arg laser_frame)" type="str"/>
+    <param name="corner_point_tolerance" value="$(arg corner_point_tolerance)" type="double"/>
+    <param name="corner_point_x" value="$(arg corner_point_x)" type="double"/>
+    <param name="corner_point_y" value="$(arg corner_point_y)" type="double"/>
   </node>
-  <!-- static transform to point near the corner -->
-  <!--<node name="static_corner_point_tf" pkg="tf" type="static_transform_publisher" args="1 -1 0 0 0 0 $(arg laser_frame) $(static_corner_point_tf) 100" />-->
+  <include file="$(find tuw_linedetection)/launch/linesegment2d_detector_node.launch"/>
 </launch>

@@ -6,7 +6,7 @@
 #include <tuw_geometry/measurement_laser.h>
 #include <tuw_geometry/linesegment2d_detector.h>
 #include <dynamic_reconfigure/server.h>
-#include <tuw_geometry/Linesegment2DDetectorConfig.h>
+#include <tuw_linedetection/Linesegment2DDetectorConfig.h>
 
 namespace tuw
 {

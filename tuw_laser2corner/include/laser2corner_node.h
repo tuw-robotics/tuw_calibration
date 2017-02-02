@@ -15,16 +15,21 @@
 class Laser2CornerNode
 {
 public:
-  Laser2CornerNode(); // Constructor
+    Laser2CornerNode(); // Constructor
 private:
-  ros::NodeHandle nh_;
-  std::shared_ptr<tf::TransformListener> tf_listener_;
-  std::shared_ptr<tf::TransformBroadcaster> tf_broadcaster_;
-  std::vector<tuw::LineSegment2D> linesegments_;
-  
-  ros::Subscriber sub_segments_;
-  
-  void callbackSegments(const tuw_geometry_msgs::LineSegments &_segments_msg);
+    ros::NodeHandle nh_;
+    ros::NodeHandle nh_private_;
+    std::shared_ptr<tf::TransformBroadcaster> tf_broadcaster_;
+    std::vector<tuw::LineSegment2D> linesegments_;
+
+    std::string laser_frame_;
+    double corner_point_tolerance_;
+    double corner_point_x_;
+    double corner_point_y_;
+
+    ros::Subscriber sub_segments_;
+
+    void callbackSegments ( const tuw_geometry_msgs::LineSegments &_segments_msg );
 };
 
 #endif //LASER2CORNER_NODE_H

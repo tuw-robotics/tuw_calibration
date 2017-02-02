@@ -21,7 +21,6 @@ private:
   ros::NodeHandle nh_;
   ros::NodeHandle nh_private_;
   ros::Publisher pub_pose_;
-  std::shared_ptr<tf::TransformListener> tf_listener_;
   std::shared_ptr<tf::TransformBroadcaster> tf_broadcaster_;
   image_geometry::PinholeCameraModel cam_model_;
   image_transport::CameraSubscriber sub_cam_;
@@ -30,6 +29,13 @@ private:
   int checkerboard_size_row_;
   int checkerboard_size_col_;
   double checkerboard_square_size_;
+  
+  double laser_height_;
+  double checker_height_;
+  double checker_y_;
+  double checker_z_;
+  
+  bool rotate_image_180_;
   
   void callbackCamera(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& info_msg);
 };

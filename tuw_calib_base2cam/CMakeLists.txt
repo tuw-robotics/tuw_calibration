@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(tuw_calib_corner2base)
-
+project(tuw_calib_base2cam)
+add_compile_options(-std=c++14) ## for c++ 2014
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  tf
+)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -96,9 +99,9 @@ find_package(catkin REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES tuw_calib_corner2base
-#  CATKIN_DEPENDS other_catkin_pkg
+  INCLUDE_DIRS include
+  LIBRARIES tuw_calib_base2cam
+  CATKIN_DEPENDS tf
 #  DEPENDS system_lib
 )
 
@@ -108,29 +111,32 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+  ./include/
+)
 
 ## Declare a C++ library
-# add_library(tuw_calib_corner2base
-#   src/${PROJECT_NAME}/tuw_calib_corner2base.cpp
+# add_library(tuw_calib_base2cam
+#   src/${PROJECT_NAME}/tuw_calib_base2cam.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(tuw_calib_corner2base ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(tuw_calib_base2cam ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(tuw_calib_corner2base_node src/tuw_calib_corner2base_node.cpp)
+add_executable(tuw_calib_base2cam_node src/calib_base2cam_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(tuw_calib_corner2base_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(tuw_calib_corner2base_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(tuw_calib_base2cam_node
+   ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##

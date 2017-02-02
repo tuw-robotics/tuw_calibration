@@ -16,16 +16,19 @@ CheckerboardNode::CheckerboardNode() : nh_private_("~")
 
   pub_image_ = it_.advertise("image_out", 1);
   pub_pose_ = nh_.advertise<geometry_msgs::PoseStamped>("checkerboard_pose", 1);
-
-  tf_listener_ = std::make_shared<tf::TransformListener>();
+  
   tf_broadcaster_ = std::make_shared<tf::TransformBroadcaster>();
-
 
   // Use a private node handle so that multiple instances of the node can be run simultaneously
   // while using different parameters.
   nh_private_.param("checkerboard_size_col", checkerboard_size_col_, 7);
   nh_private_.param("checkerboard_size_row", checkerboard_size_row_, 5);
   nh_private_.param("checkerboard_square_size", checkerboard_square_size_, 0.03);
+  nh_private_.param("laser_height", laser_height_, 0.3);
+  nh_private_.param("checker_height", checker_height_, 1.325);
+  nh_private_.param("checker_y", checker_y_, 0.505);
+  checker_z_ = checker_height_ - laser_height_;
+  nh_private_.param("rotate_image_180", rotate_image_180_, true);
 }
 
 /*
@@ -44,9 +47,15 @@ void CheckerboardNode::callbackCamera(const sensor_msgs::ImageConstPtr& image_ms
   {
     input_bridge = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::BGR8);
     // rotate image by 180 deg
-    // cv::flip(input_bridge->image, image, -1);
-    image = input_bridge->image;
-    // input_bridge->image = image;
+    if(rotate_image_180_)
+    {
+      cv::flip(input_bridge->image, image, -1);
+      input_bridge->image = image;
+    }
+    else
+    {
+      image = input_bridge->image;
+    }
     cvtColor(image, image_grey, CV_BGR2GRAY, 0);
   }
   catch (cv_bridge::Exception& ex)
@@ -56,7 +65,6 @@ void CheckerboardNode::callbackCamera(const sensor_msgs::ImageConstPtr& image_ms
   }
 
   bool patternfound = findChessboardCorners(image, patternsize, image_corners, CALIB_CB_FAST_CHECK);
-  // CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE +
 
   if (patternfound)
   {
@@ -64,8 +72,7 @@ void CheckerboardNode::callbackCamera(const sensor_msgs::ImageConstPtr& image_ms
                  TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
 
     // generate object points
-    // float square_size = 30.0f; // chessboard square size in mm - output in mm
-    float square_size = float(checkerboard_square_size_);  // chessboard square size in m - output in meters
+    float square_size = float(checkerboard_square_size_);  // chessboard square size unit defines output unit
     vector<Point3f> object_corners;
 
     for (int i = 0; i < patternsize.height; i++)
@@ -76,7 +83,6 @@ void CheckerboardNode::callbackCamera(const sensor_msgs::ImageConstPtr& image_ms
       }
     }
 
-    // solvePnP -- camera matrix, distortion coefficients
     cam_model_.fromCameraInfo(info_msg);
     Mat camera_matrix = Mat(cam_model_.intrinsicMatrix());
     Mat dist_coeff = cam_model_.distortionCoeffs();
@@ -84,21 +90,10 @@ void CheckerboardNode::callbackCamera(const sensor_msgs::ImageConstPtr& image_ms
     Vec3d translation_vec;
 
     solvePnP(object_corners, image_corners, camera_matrix, dist_coeff, rotation_vec, translation_vec);
-    // , false, SOLVEPNP_ITERATIVE
-
-    for (int i = 0; i < image_corners.size(); i++)
-    {
-      // ROS_INFO("image_corners(%d) = (%f, %f)", i, image_corners[i].x, image_corners[i].y);
-    }
 
     // generate rotation matrix from vector
     Mat rotation_mat;
     Rodrigues(rotation_vec, rotation_mat, noArray());
-
-    /*
-    std::cout << "rotation_mat [m] = " << std::endl << rotation_mat << std::endl;
-    std::cout << "translation_mat [m] = " << std::endl << Mat(translation_vec) << std::endl;
-    */
 
     // generate tf model to camera
     tf::Matrix3x3 R(rotation_mat.at<double>(0, 0), rotation_mat.at<double>(0, 1), rotation_mat.at<double>(0, 2),
@@ -107,44 +102,44 @@ void CheckerboardNode::callbackCamera(const sensor_msgs::ImageConstPtr& image_ms
 
     tf::Vector3 T = tf::Vector3(translation_vec(0), translation_vec(1), translation_vec(2));
 
-    tf::Transform chess_to_cam(R, T);
-
-    // tf::Transform cam_to_chess = chess_to_cam.inverse();
+    tf::Transform cam_to_checker(R, T);
 
     // transform correction for ros coordinate system
     // ROS: x - forward, y - left, z - up
     // opencv: x - right, y - down, z - forward
     tf::Quaternion q;
-    q.setRPY(1.5708, 0, 1.5708);
-    q *= chess_to_cam.getRotation();
-    chess_to_cam.setRotation(q);
-    chess_to_cam.setOrigin(tf::Vector3(T.getZ(), -T.getX(), -T.getY()));
+    q.setRPY(2*1.5708, 0, 1.5708);
+    q *= cam_to_checker.getRotation();
+    cam_to_checker.setRotation(q);
+    cam_to_checker.setOrigin(tf::Vector3(T.getZ(), -T.getX(), -T.getY()));
+    
+    tf::Transform checker_to_cam = cam_to_checker.inverse();
+    
+    tf::Transform corner_to_checker;
+    corner_to_checker.setOrigin(tf::Vector3(0, checker_y_, checker_z_));
+    tf::Quaternion q2;
+    q2.setRPY(0, 0, 0);
+    corner_to_checker.setRotation(q2);
+    
+    tf_broadcaster_->sendTransform(tf::StampedTransform(corner_to_checker, ros::Time::now(), "corner", "checkerboard"));
 
-    tf_broadcaster_->sendTransform(tf::StampedTransform(chess_to_cam, ros::Time::now(), "camera_rgb_frame", "chess_to_"
-                                                                                                            "cam"));
-
-    vector<Point2f> image_points;
-    projectPoints(object_corners, rotation_vec, translation_vec, camera_matrix, dist_coeff, image_points);
-
-    for (int i = 0; i < image_points.size(); i++)
-    {
-      circle(image, image_points[i], 2, Scalar(0, 0, 255), -1, 8, 0);
-    }
+    tf_broadcaster_->sendTransform(tf::StampedTransform(checker_to_cam, ros::Time::now(), "checkerboard", "camera_rgb_frame"));
 
     // also publish pose
+    /*
     geometry_msgs::PoseStamped pose_stamped;
     pose_stamped.header.frame_id = "camera_rgb_frame";
     pose_stamped.header.stamp = ros::Time::now();
-    pose_stamped.pose.orientation.x = chess_to_cam.getRotation().getX();
-    pose_stamped.pose.orientation.y = chess_to_cam.getRotation().getY();
-    pose_stamped.pose.orientation.z = chess_to_cam.getRotation().getZ();
-    pose_stamped.pose.orientation.w = chess_to_cam.getRotation().getW();
+    pose_stamped.pose.orientation.x = checker_to_cam.getRotation().getX();
+    pose_stamped.pose.orientation.y = checker_to_cam.getRotation().getY();
+    pose_stamped.pose.orientation.z = checker_to_cam.getRotation().getZ();
+    pose_stamped.pose.orientation.w = checker_to_cam.getRotation().getW();
 
-    pose_stamped.pose.position.x = chess_to_cam.getOrigin().getX();
-    pose_stamped.pose.position.y = chess_to_cam.getOrigin().getY();
-    pose_stamped.pose.position.z = chess_to_cam.getOrigin().getZ();
+    pose_stamped.pose.position.x = checker_to_cam.getOrigin().getX();
+    pose_stamped.pose.position.y = checker_to_cam.getOrigin().getY();
+    pose_stamped.pose.position.z = checker_to_cam.getOrigin().getZ();
 
-    pub_pose_.publish(pose_stamped);
+    pub_pose_.publish(pose_stamped);*/
   }
 
   drawChessboardCorners(image, patternsize, Mat(image_corners), patternfound);

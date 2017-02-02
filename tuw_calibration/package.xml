@@ -43,7 +43,7 @@
 
   <run_depend>tuw_checkerboard</run_depend>
   <run_depend>tuw_laser2corner</run_depend>
-  <run_depend>tuw_calib_corner2base</run_depend>
+  <run_depend>tuw_calib_base2cam</run_depend>
   <run_depend>tuw_linedetection</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->

@@ -5,17 +5,21 @@
 using std::vector;
 using std::string;
 
-Laser2CornerNode::Laser2CornerNode()
+Laser2CornerNode::Laser2CornerNode() : nh_private_("~")
 {
-  tf_listener_ = std::make_shared<tf::TransformListener>();
   tf_broadcaster_ = std::make_shared<tf::TransformBroadcaster>();
   sub_segments_ = nh_.subscribe("line_segments", 1000, &Laser2CornerNode::callbackSegments, this);
+
+  nh_private_.param("laser_frame", laser_frame_, std::string("laser_frame"));
+  nh_private_.param("corner_point_tolerance", corner_point_tolerance_, 0.005);
+  nh_private_.param("corner_point_x", corner_point_x_, 1.0);
+  nh_private_.param("corner_point_y", corner_point_y_, -1.0);
 }
 
 void Laser2CornerNode::callbackSegments(const tuw_geometry_msgs::LineSegments& _segments_msg)
 {
-  // assume corner lies near (1, -1, 0) wrt laser_base
-  tuw::Point2D pc(1, -1);
+  // assume corner lies near (corner_point_x_, corner_point_y_, 0) wrt laser_base
+  tuw::Point2D pc(corner_point_x_, corner_point_y_);
 
   linesegments_.resize(_segments_msg.segments.size());
 
@@ -60,45 +64,47 @@ void Laser2CornerNode::callbackSegments(const tuw_geometry_msgs::LineSegments& _
       closest_idx_2 = i;
     }
   }
-  
-  ROS_INFO("linesegment[%d] closest 1, p0 = (%f, %f), p1 = (%f, %f)", closest_idx_1, linesegments_[closest_idx_1].p0().x(),
-       linesegments_[closest_idx_1].p0().y(),
-             linesegments_[closest_idx_1].p1().x(), linesegments_[closest_idx_1].p1().y());
-  
-  ROS_INFO("linesegment[%d] closest 2, p0 = (%f, %f), p1 = (%f, %f)", closest_idx_2, linesegments_[closest_idx_2].p0().x(),
-       linesegments_[closest_idx_2].p0().y(),
-             linesegments_[closest_idx_2].p1().x(), linesegments_[closest_idx_2].p1().y());
+
+  // find corner point (where linesegments meet)
+  tuw::Point2D corner_point;
+  if (linesegments_[closest_idx_1].p0().equal(linesegments_[closest_idx_2].p0(), corner_point_tolerance_) ||
+      linesegments_[closest_idx_1].p0().equal(linesegments_[closest_idx_2].p1(), corner_point_tolerance_))
+  {
+    corner_point = linesegments_[closest_idx_1].p0();
+  }
+  else if (linesegments_[closest_idx_1].p1().equal(linesegments_[closest_idx_2].p0(), corner_point_tolerance_) ||
+           linesegments_[closest_idx_1].p1().equal(linesegments_[closest_idx_2].p1(), corner_point_tolerance_))
+  {
+    corner_point = linesegments_[closest_idx_1].p1();
+  }
+
+  double corner_yaw;  // rotation around z axis
 
   // use middle of line segments to check which is upfront and which on the side
-  tuw::Point2D middle_1(std::abs(linesegments_[closest_idx_1].p0().x() - linesegments_[closest_idx_1].p1().x()) / 2,
-                        std::abs(linesegments_[closest_idx_1].p0().y() - linesegments_[closest_idx_1].p1().y()) / 2);
-  tuw::Point2D middle_2(std::abs(linesegments_[closest_idx_2].p0().x() - linesegments_[closest_idx_2].p1().x()) / 2,
-                        std::abs(linesegments_[closest_idx_2].p0().y() - linesegments_[closest_idx_2].p1().y()) / 2);
-  
-  ROS_INFO("middle_1 = (%f, %f), middle_2 = (%f, %f)", middle_1.x(), middle_1.y(), middle_2.x(), middle_2.y());
-  
-  if(middle_1.x() > middle_2.x())
+  tuw::Point2D middle_1 = linesegments_[closest_idx_1].pc();
+  tuw::Point2D middle_2 = linesegments_[closest_idx_2].pc();
+
+  // use angle from line on the side
+  if (middle_1.x() > middle_2.x())
   {
-    ROS_INFO("middle_1 is upfront");
-    if(middle_2.y() < 0) 
-      ROS_INFO("middle_2 is right");
-    else
-      ROS_INFO("middle_2 is left");
+    corner_yaw = linesegments_[closest_idx_2].angle();
   }
   else
   {
-    ROS_INFO("middle_2 is upfront");
-    if(middle_1.y() < 0)
-      ROS_INFO("middle_1 is right");
-    else
-      ROS_INFO("middle_1 is left");
+    corner_yaw = linesegments_[closest_idx_1].angle();
   }
-  
+
+  tf::Vector3 T = tf::Vector3(corner_point.x(), corner_point.y(), 0);
+  tf::Quaternion Q;
+  Q.setRPY(0, 0, corner_yaw);
+
+  tf::Transform laser_to_corner(Q, T);
+  tf_broadcaster_->sendTransform(tf::StampedTransform(laser_to_corner, ros::Time::now(), laser_frame_, "corner"));
 }
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "laser2corner");
+  ros::init(argc, argv, "tuw_laser2corner");
 
   Laser2CornerNode laser2corner_node;
 
