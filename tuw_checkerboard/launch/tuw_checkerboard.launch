@@ -1,6 +1,6 @@
 <launch>
   <arg name="camera_namespace" default="/camera"/>
-  <arg name="color_image" default="$(arg camera_namespace)/rgb/image_rect_color"/>
+  <arg name="color_image" default="$(arg camera_namespace)/rgb/image_raw"/>
   <arg name="image_out" default="image_out"/>
   <arg name="checkerboard_size_col" default="7"/>
   <arg name="checkerboard_size_row" default="5"/>
@@ -8,7 +8,7 @@
   <arg name="laser_height" default="0.3"/>
   <arg name="checker_height" default="1.325"/>
   <arg name="checker_y" default="0.505"/>
-  <arg name="rotate_image_180" default="true"/>
+  <arg name="rotate_image_180" default="false"/>
   
   <node name="tuw_checkerboard_node" pkg="tuw_checkerboard" type="tuw_checkerboard_node" output="screen">
       <remap from="image" to="$(arg color_image)" />

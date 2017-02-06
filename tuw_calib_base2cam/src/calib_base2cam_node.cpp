@@ -24,6 +24,8 @@ void Base2CamNode::getBase2CamTf()
   tf::Quaternion rotation = base2cam.getRotation();
 
   // print as static transform publisher
+  // TODO output only once, maybe using an average or most probable tf since checkerboard detection and line detection
+  // are no always stable
   ROS_INFO("%f %f %f %f %f %f %f %s %s", origin.getX(), origin.getY(), origin.getZ(), rotation.x(), rotation.y(),
            rotation.z(), rotation.w(), base_link_.c_str(), camera_link_.c_str());
 }
