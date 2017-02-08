@@ -23,7 +23,6 @@ private:
   MeasurementLaserPtr measurement_laser_;  /// laser measurements
   std::vector<Point2D> measurement_local_scanpoints_; /// laser beam endpoints for line detection
   std::vector<LineSegment2D> measurement_linesegments_;    /// detected line segments in sensor coordinates
-  std::string laser_frame_;
   dynamic_reconfigure::Server<tuw_geometry::Linesegment2DDetectorConfig> reconfigure_server_; /// parameter server stuff general use
   dynamic_reconfigure::Server<tuw_geometry::Linesegment2DDetectorConfig>::CallbackType reconfigure_fnc_; /// parameter server stuff general use
   void callbackConfig(tuw_geometry::Linesegment2DDetectorConfig &config, uint32_t level); /// callback function on incoming parameter changes for general use

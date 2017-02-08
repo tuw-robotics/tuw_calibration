@@ -13,7 +13,6 @@ Linesegment2DDetectorNode::Linesegment2DDetectorNode() : nh_private_("~")
 
   // Use a private node handle so that multiple instances of the node can be run simultaneously
   // while using different parameters.
-  nh_private_.param("laser_frame", laser_frame_, std::string("laser"));
 
   reconfigure_fnc_ = boost::bind(&Linesegment2DDetectorNode::callbackConfig, this, _1, _2);
   reconfigure_server_.setCallback(reconfigure_fnc_);
@@ -66,8 +65,7 @@ void Linesegment2DDetectorNode::callbackLaser(const sensor_msgs::LaserScan& _las
     line_segments_msg.segments.push_back(line_segment_msg);
   }
   // set header information
-  line_segments_msg.header.frame_id = laser_frame_;
-  line_segments_msg.header.stamp = ros::Time::now();
+  line_segments_msg.header = _laser.header;
 
   line_pub_.publish(line_segments_msg);
 }
