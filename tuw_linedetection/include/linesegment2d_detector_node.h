@@ -10,25 +10,42 @@
 
 namespace tuw
 {
-
+/**
+ * @brief ROS wrapper node for LineSegment2DDetector
+ * @class Linesegment2DDetectorNode
+ */
 class Linesegment2DDetectorNode : public LineSegment2DDetector
 {
 public:
-    Linesegment2DDetectorNode();
+  Linesegment2DDetectorNode();
+
 private:
   ros::NodeHandle nh_;
   ros::NodeHandle nh_private_;
-  ros::Subscriber sub_laser_; /// Subscriber to the laser measurements
+  ros::Subscriber sub_laser_;  /// Subscriber to the laser measurements
   ros::Publisher line_pub_;
-  MeasurementLaserPtr measurement_laser_;  /// laser measurements
-  std::vector<Point2D> measurement_local_scanpoints_; /// laser beam endpoints for line detection
-  std::vector<LineSegment2D> measurement_linesegments_;    /// detected line segments in sensor coordinates
-  dynamic_reconfigure::Server<tuw_geometry::Linesegment2DDetectorConfig> reconfigure_server_; /// parameter server stuff general use
-  dynamic_reconfigure::Server<tuw_geometry::Linesegment2DDetectorConfig>::CallbackType reconfigure_fnc_; /// parameter server stuff general use
-  void callbackConfig(tuw_geometry::Linesegment2DDetectorConfig &config, uint32_t level); /// callback function on incoming parameter changes for general use
+  MeasurementLaserPtr measurement_laser_;                /// laser measurements
+  std::vector<Point2D> measurement_local_scanpoints_;    /// laser beam endpoints for line detection
+  std::vector<LineSegment2D> measurement_linesegments_;  /// detected line segments in sensor coordinates
+
+  /// parameter server for dynamic detector configuration
+  dynamic_reconfigure::Server<tuw_geometry::Linesegment2DDetectorConfig> reconfigure_server_;
+
+  /// parameter server callback
+  dynamic_reconfigure::Server<tuw_geometry::Linesegment2DDetectorConfig>::CallbackType reconfigure_fnc_;
+
+  /**
+   * @brief callback function on incoming parameter changes
+   * @param config the configuration message
+   * @param level not used here, but required for dynamic reconfigure callbacks
+   */
+  void callbackConfig(tuw_geometry::Linesegment2DDetectorConfig &config, uint32_t level);
+  /**
+   * @brief callback function for incoming laser scans
+   * @param _laser laser scan message
+   */
   void callbackLaser(const sensor_msgs::LaserScan &_laser);
 };
-
 };
 
-#endif // LINESEGMENT2D_DETECTOR_NODE_H
+#endif  // LINESEGMENT2D_DETECTOR_NODE_H

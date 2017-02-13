@@ -10,7 +10,6 @@ Laser2CornerNode::Laser2CornerNode() : nh_private_("~")
   tf_broadcaster_ = std::make_shared<tf::TransformBroadcaster>();
   sub_segments_ = nh_.subscribe("line_segments", 1000, &Laser2CornerNode::callbackSegments, this);
 
-  nh_private_.param("laser_frame", laser_frame_, std::string("laser_frame"));
   nh_private_.param("corner_point_tolerance", corner_point_tolerance_, 0.005);
   nh_private_.param("corner_point_x", corner_point_x_, 1.0);
   nh_private_.param("corner_point_y", corner_point_y_, -1.0);
@@ -99,7 +98,8 @@ void Laser2CornerNode::callbackSegments(const tuw_geometry_msgs::LineSegments& _
   Q.setRPY(0, 0, corner_yaw);
 
   tf::Transform laser_to_corner(Q, T);
-  tf_broadcaster_->sendTransform(tf::StampedTransform(laser_to_corner, ros::Time::now(), laser_frame_, "corner"));
+  tf_broadcaster_->sendTransform(
+      tf::StampedTransform(laser_to_corner, ros::Time::now(), _segments_msg.header.frame_id, "corner"));
 }
 
 int main(int argc, char** argv)
