@@ -16,9 +16,16 @@ public:
 private:
   ros::NodeHandle nh_private_;
   std::shared_ptr<tf::TransformListener> tf_listener_;
-  //std::shared_ptr<tf::TransformBroadcaster> tf_broadcaster_;
+  std::shared_ptr<tf::TransformBroadcaster> tf_broadcaster_;
   std::string camera_link_;
   std::string base_link_;
+  std::string checkerboard_frame_;
+  std::string corner_frame_;
+  
+  double laser_height_;
+  double checker_height_;
+  double checker_y_;
+  double checker_z_;
 };
 
 #endif //CALIB_BASE2CAM_NODE_H

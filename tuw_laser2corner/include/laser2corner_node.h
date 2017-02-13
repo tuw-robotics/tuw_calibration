@@ -12,10 +12,18 @@
 #include <tuw_geometry_msgs/LineSegments.h>
 
 
+/**
+ * @brief ...
+ * @class 
+ * @author
+ */
 class Laser2CornerNode
 {
 public:
-    Laser2CornerNode(); // Constructor
+  /**
+   * Constructor
+   */
+  Laser2CornerNode();
 private:
     ros::NodeHandle nh_;
     ros::NodeHandle nh_private_;
@@ -29,6 +37,12 @@ private:
 
     ros::Subscriber sub_segments_;
 
+    /**
+     * @brief ...
+     * 
+     * @param _segments_msg ...
+     * @return void
+     */
     void callbackSegments ( const tuw_geometry_msgs::LineSegments &_segments_msg );
 };
 
