@@ -12,6 +12,7 @@ Base2CamNode::Base2CamNode() : nh_private_("~")
   nh_private_.param("checker_height", checker_height_, 1.295);
   nh_private_.param("checker_y", checker_y_, 0.475);
   checker_z_ = checker_height_ - laser_height_;
+  nh_private_.param("publish_all_tf", publish_all_tf_, true);
 }
 
 void Base2CamNode::getBase2CamTf()
@@ -23,10 +24,9 @@ void Base2CamNode::getBase2CamTf()
   q.setRPY(0, 1.5708, 2 * 1.5708);
   corner2checker.setRotation(q);
 
-#if DEBUG
+if(publish_all_tf_)
   tf_broadcaster_->sendTransform(tf::StampedTransform(corner2checker, ros::Time::now(), corner_frame_, "checkerboardVI"
                                                                                                        "S"));
-#endif
 
   tf::StampedTransform camlink2checker;
   try
@@ -39,10 +39,9 @@ void Base2CamNode::getBase2CamTf()
     ros::Duration(1.0).sleep();
   }
 
-#if DEBUG
+if(publish_all_tf_)
   tf_broadcaster_->sendTransform(tf::StampedTransform(camlink2checker, ros::Time::now(), "checkerboardVIS", "camlinkVI"
                                                                                                             "S"));
-#endif
 
   tf::StampedTransform corner2base;
 
@@ -56,15 +55,13 @@ void Base2CamNode::getBase2CamTf()
     ros::Duration(1.0).sleep();
   }
 
-#if DEBUG
+if(publish_all_tf_)
   tf_broadcaster_->sendTransform(tf::StampedTransform(corner2base, ros::Time::now(), base_link_, "cornerVIS"));
-#endif
 
   tf::Transform base2cam = corner2base * corner2checker * camlink2checker;
 
-#if DEBUG
+if(publish_all_tf_)
   tf_broadcaster_->sendTransform(tf::StampedTransform(base2cam, ros::Time::now(), base_link_, "camVIS"));
-#endif
 
   tf::Vector3 origin = base2cam.getOrigin();
   tf::Quaternion rotation = base2cam.getRotation();

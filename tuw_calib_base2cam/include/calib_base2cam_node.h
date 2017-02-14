@@ -35,6 +35,8 @@ private:
   double checker_height_;  /// height of the checkerboard origin from the ground
   double checker_y_;       /// distance from the corner to the checkerboard origin
   double checker_z_;       /// checker_height_ - laser_height_
+  
+  bool publish_all_tf_;
 };
 
 #endif  // CALIB_BASE2CAM_NODE_H

@@ -1,17 +1,18 @@
 <launch>
-  <arg name="camera_link" default="/camera_link" />
-  <arg name="base_link" default="/top" />
-  <arg name="scan" default="laser_front/scan" />
+  <arg name="camera_link" default="/p3dx/camera_xtion_link" />
+  <arg name="base_link" default="/p3dx/top" />
+  <arg name="scan" default="/p3dx/laser_front/scan" />
   <arg name="checkerboard_frame" default="/checkerboard" />
   <arg name="corner_frame" default="/corner" />
   <arg name="laser_height" default="0.3"/>
-  <arg name="checker_height" default="1.295"/>
-  <arg name="checker_y" default="0.475"/>
+  <arg name="checker_height" default="1.595"/>
+  <arg name="checker_y" default="0.333"/>
   <arg name="rotate_image_180" default="false"/>
-  <arg name="color_image" default="/camera/rgb/image_raw"/>
+  <arg name="color_image" default="/p3dx/camera_xtion/rgb/image_raw"/>
+  <arg name="publish_all_tf" default="true" />
   
   <include file="$(find tuw_laser2corner)/launch/laser2corner.launch" >
-      <arg name="scan" value="($arg scan)" />
+      <arg name="scan" value="$(arg scan)" />
   </include>
   
   <include file="$(find tuw_checkerboard)/launch/detection.launch">
@@ -26,5 +27,6 @@
       <param name="laser_height" value="$(arg laser_height)" type="double" />
       <param name="checker_height" value="$(arg checker_height)" type="double" />
       <param name="checker_y" value="$(arg checker_y)" type="double" />
+      <param name="publish_all_tf" value="$(arg publish_all_tf)" type="bool" />
   </node>
 </launch>
