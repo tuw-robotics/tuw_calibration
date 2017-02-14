@@ -34,6 +34,7 @@ private:
   double corner_point_y_;          /// heuristic ref. point to find line segments forming a corner
 
   ros::Subscriber sub_segments_;
+  ros::Publisher pub_marker_;
 
   /**
     * @brief Callback for received LineSegments msgs

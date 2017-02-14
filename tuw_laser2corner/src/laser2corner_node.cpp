@@ -1,6 +1,7 @@
 #include "laser2corner_node.h"
 
 #include <geometry_msgs/Pose2D.h>
+#include <visualization_msgs/Marker.h>
 
 using std::vector;
 using std::string;
@@ -9,6 +10,7 @@ Laser2CornerNode::Laser2CornerNode() : nh_private_("~")
 {
   tf_broadcaster_ = std::make_shared<tf::TransformBroadcaster>();
   sub_segments_ = nh_.subscribe("line_segments", 1000, &Laser2CornerNode::callbackSegments, this);
+  pub_marker_ = nh_.advertise<visualization_msgs::Marker>("line_segments_marker", 10);
 
   nh_private_.param("corner_point_tolerance", corner_point_tolerance_, 0.005);
   nh_private_.param("corner_point_x", corner_point_x_, 1.0);
@@ -82,6 +84,28 @@ void Laser2CornerNode::callbackSegments(const tuw_geometry_msgs::LineSegments& _
   // use middle of line segments to check which is upfront and which on the side
   tuw::Point2D middle_1 = linesegments_[closest_idx_1].pc();
   tuw::Point2D middle_2 = linesegments_[closest_idx_2].pc();
+  
+  // publish center of selected line segments as marker
+  visualization_msgs::Marker centers;
+  centers.header.frame_id = _segments_msg.header.frame_id;
+  centers.header.stamp = ros::Time::now();
+  centers.id = 0;
+  centers.ns = "linesegment_centers";
+  centers.type = visualization_msgs::Marker::POINTS;
+  centers.action = visualization_msgs::Marker::ADD;
+  centers.scale.x = 0.1;
+  centers.scale.y = 0.1;
+  centers.color.g = 1.0;
+  centers.color.a = 1.0;
+  geometry_msgs::Point p;
+  p.x = middle_1.x();
+  p.y = middle_1.y();
+  centers.points.push_back(p);
+  p.x = middle_2.x();
+  p.y = middle_2.y();
+  centers.points.push_back(p);
+  
+  pub_marker_.publish(centers);
 
   // use angle from line on the side
   if (middle_1.x() > middle_2.x())

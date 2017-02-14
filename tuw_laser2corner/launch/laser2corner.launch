@@ -13,5 +13,7 @@
     <param name="corner_point_x" value="$(arg corner_point_x)" type="double"/>
     <param name="corner_point_y" value="$(arg corner_point_y)" type="double"/>
   </node>
-  <include file="$(find tuw_linedetection)/launch/linesegment2d_detector_node.launch"/>
+  <include file="$(find tuw_linedetection)/launch/linesegment2d_detector_node.launch">
+      <arg name="laser_scan" value="/p3dx/laser_front/scan" />
+  </include>
 </launch>
