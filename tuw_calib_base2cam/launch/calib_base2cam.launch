@@ -1,6 +1,6 @@
 <launch>
   <arg name="camera_link" default="/camera_link" />
-  <arg name="base_link" default="/p3dx/base_link" />
+  <arg name="base_link" default="/p3dx/top" />
   <arg name="checkerboard_frame" default="/checkerboard" />
   <arg name="corner_frame" default="/corner" />
   <arg name="laser_height" default="0.3"/>
