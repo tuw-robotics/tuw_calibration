@@ -1,12 +1,22 @@
 <launch>
   <arg name="camera_link" default="/camera_link" />
-  <arg name="base_link" default="/p3dx/top" />
+  <arg name="base_link" default="/top" />
+  <arg name="scan" default="laser_front/scan" />
   <arg name="checkerboard_frame" default="/checkerboard" />
   <arg name="corner_frame" default="/corner" />
   <arg name="laser_height" default="0.3"/>
   <arg name="checker_height" default="1.295"/>
   <arg name="checker_y" default="0.475"/>
   <arg name="rotate_image_180" default="false"/>
+  <arg name="color_image" default="/camera/rgb/image_raw"/>
+  
+  <include file="$(find tuw_laser2corner)/launch/laser2corner.launch" >
+      <arg name="scan" value="($arg scan)" />
+  </include>
+  
+  <include file="$(find tuw_checkerboard)/launch/detection.launch">
+    <arg name="color_image" value="$(arg color_image)" />
+  </include>
   
   <node name="tuw_calib_base2cam_node" pkg="tuw_calib_base2cam" type="tuw_calib_base2cam_node" output="screen">
       <param name="camera_link" value="$(arg camera_link)" type="str" />
@@ -17,9 +27,4 @@
       <param name="checker_height" value="$(arg checker_height)" type="double" />
       <param name="checker_y" value="$(arg checker_y)" type="double" />
   </node>
-
-  <include file="$(find tuw_laser2corner)/launch/laser2corner.launch"/>
-  <include file="$(find tuw_checkerboard)/launch/detection.launch">
-    <arg name="color_image" value="/camera/rgb/image_rect_color" />
-  </include>
 </launch>
