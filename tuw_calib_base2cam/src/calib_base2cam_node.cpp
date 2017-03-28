@@ -31,6 +31,7 @@
  ***************************************************************************/
 
 #include "calib_base2cam_node.h"
+#include <math.h>
 
 Base2CamNode::Base2CamNode() : nh_private_("~")
 {
@@ -44,6 +45,7 @@ Base2CamNode::Base2CamNode() : nh_private_("~")
   nh_private_.param("checker_height", checker_height_, 1.295);
   nh_private_.param("checker_y", checker_y_, 0.475);
   checker_z_ = checker_height_ - laser_height_;
+  nh_private_.param("rotate_camera_image_180", rotate_180_, false);
   nh_private_.param("publish_all_tf", publish_all_tf_, true);
 }
 
@@ -53,7 +55,7 @@ void Base2CamNode::getBase2CamTf()
   tf::Transform corner2checker;
   corner2checker.setOrigin(tf::Vector3(0, checker_y_, checker_z_));
   tf::Quaternion q;
-  q.setRPY(0, 1.5708, 2 * 1.5708);
+  q.setRPY(0, M_PI/2, M_PI);
   corner2checker.setRotation(q);
 
 if(publish_all_tf_)
@@ -97,6 +99,13 @@ if(publish_all_tf_)
 
   tf::Vector3 origin = base2cam.getOrigin();
   tf::Quaternion rotation = base2cam.getRotation();
+
+  if(rotate_180_)
+  {
+    tf::Quaternion flip;
+    flip.setRPY(M_PI, 0, 0);
+    rotation = rotation * flip;
+  }
 
   // print as static transform publisher
   // TODO output only once, maybe using an average or most probable tf since checkerboard detection and line detection

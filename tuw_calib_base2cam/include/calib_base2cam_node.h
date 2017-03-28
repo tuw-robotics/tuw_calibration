@@ -68,6 +68,7 @@ private:
   double checker_y_;       /// distance from the corner to the checkerboard origin
   double checker_z_;       /// checker_height_ - laser_height_
   
+  bool rotate_180_;        /// whether to rotate the camera tf by 180°
   bool publish_all_tf_;
 };
 

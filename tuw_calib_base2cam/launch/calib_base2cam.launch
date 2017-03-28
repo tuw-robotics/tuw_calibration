@@ -7,7 +7,7 @@
   <arg name="laser_height" default="0.3"/>
   <arg name="checker_height" default="1.595"/>
   <arg name="checker_y" default="0.333"/>
-  <arg name="rotate_image_180" default="false"/>
+  <arg name="rotate_camera_image_180" default="false"/>
   <arg name="color_image" default="/p3dx/camera_xtion/rgb/image_raw"/>
   <arg name="publish_all_tf" default="true" />
   
@@ -16,7 +16,8 @@
   </include>
   
   <include file="$(find tuw_checkerboard)/launch/detection.launch">
-    <arg name="color_image" value="$(arg color_image)" />
+      <arg name="color_image" value="$(arg color_image)" />
+      <arg name="rotate_camera_image_180" value="$(arg rotate_camera_image_180)" />
   </include>
   
   <node name="tuw_calib_base2cam_node" pkg="tuw_calib_base2cam" type="tuw_calib_base2cam_node" output="screen">
@@ -27,6 +28,7 @@
       <param name="laser_height" value="$(arg laser_height)" type="double" />
       <param name="checker_height" value="$(arg checker_height)" type="double" />
       <param name="checker_y" value="$(arg checker_y)" type="double" />
+      <param name="rotate_camera_image_180" value="$(arg rotate_camera_image_180)" type="bool"/>
       <param name="publish_all_tf" value="$(arg publish_all_tf)" type="bool" />
   </node>
 </launch>
