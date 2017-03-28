@@ -2,8 +2,8 @@
   <arg name="static_corner_point_tf" default="static_corner_point_tf"/>
   <arg name="linesegments_pub" default="line_segments"/>
   <arg name="corner_point_tolerance" default="0.005"/>
-  <arg name="corner_point_x" default="0.7"/>
-  <arg name="corner_point_y" default="-0.2"/>
+  <arg name="corner_point_x" default="2.0"/>
+  <arg name="corner_point_y" default="-0.1"/>
   <arg name="scan" default="laser_front/scan" />
   
   <include file="$(find tuw_linedetection)/launch/linesegment2d_detector_node.launch">

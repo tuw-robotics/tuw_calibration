@@ -4,10 +4,10 @@
   <arg name="scan" default="/p3dx/laser_front/scan" />
   <arg name="checkerboard_frame" default="/checkerboard" />
   <arg name="corner_frame" default="/corner" />
-  <arg name="laser_height" default="0.3"/>
+  <arg name="laser_height" default="0.33"/>
   <arg name="checker_height" default="1.595"/>
   <arg name="checker_y" default="0.333"/>
-  <arg name="rotate_image_180" default="false"/>
+  <arg name="rotate_image_180" default="true"/>
   <arg name="color_image" default="/p3dx/camera_xtion/rgb/image_raw"/>
   <arg name="publish_all_tf" default="true" />
   
@@ -17,6 +17,9 @@
   
   <include file="$(find tuw_checkerboard)/launch/detection.launch">
     <arg name="color_image" value="$(arg color_image)" />
+    <arg name="checkerboard_columns" value="9"/>
+    <arg name="checkerboard_rows" value="6"/>
+    <arg name="checkerboard_square_size" value="0.025"/>
   </include>
   
   <node name="tuw_calib_base2cam_node" pkg="tuw_calib_base2cam" type="tuw_calib_base2cam_node" output="screen">
