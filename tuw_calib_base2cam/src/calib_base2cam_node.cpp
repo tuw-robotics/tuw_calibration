@@ -55,12 +55,13 @@ void Base2CamNode::getBase2CamTf()
   tf::Transform corner2checker;
   corner2checker.setOrigin(tf::Vector3(0, checker_y_, checker_z_));
   tf::Quaternion q;
-  q.setRPY(0, M_PI/2, M_PI);
+  q.setRPY(0, M_PI / 2, M_PI);
   corner2checker.setRotation(q);
 
-if(publish_all_tf_)
-  tf_broadcaster_->sendTransform(tf::StampedTransform(corner2checker, ros::Time::now(), corner_frame_, "checkerboardVI"
-                                                                                                       "S"));
+  if (publish_all_tf_)
+    tf_broadcaster_->sendTransform(tf::StampedTransform(corner2checker, ros::Time::now(), corner_frame_,
+                                                        "checkerboardVI"
+                                                        "S"));
 
   tf::StampedTransform camlink2checker;
   try
@@ -73,9 +74,10 @@ if(publish_all_tf_)
     ros::Duration(1.0).sleep();
   }
 
-if(publish_all_tf_)
-  tf_broadcaster_->sendTransform(tf::StampedTransform(camlink2checker, ros::Time::now(), "checkerboardVIS", "camlinkVI"
-                                                                                                            "S"));
+  if (publish_all_tf_)
+    tf_broadcaster_->sendTransform(tf::StampedTransform(camlink2checker, ros::Time::now(), "checkerboardVIS",
+                                                        "camlinkVI"
+                                                        "S"));
 
   tf::StampedTransform corner2base;
 
@@ -89,23 +91,24 @@ if(publish_all_tf_)
     ros::Duration(1.0).sleep();
   }
 
-if(publish_all_tf_)
-  tf_broadcaster_->sendTransform(tf::StampedTransform(corner2base, ros::Time::now(), base_link_, "cornerVIS"));
+  if (publish_all_tf_)
+    tf_broadcaster_->sendTransform(tf::StampedTransform(corner2base, ros::Time::now(), base_link_, "cornerVIS"));
 
   tf::Transform base2cam = corner2base * corner2checker * camlink2checker;
-
-if(publish_all_tf_)
-  tf_broadcaster_->sendTransform(tf::StampedTransform(base2cam, ros::Time::now(), base_link_, "camVIS"));
 
   tf::Vector3 origin = base2cam.getOrigin();
   tf::Quaternion rotation = base2cam.getRotation();
 
-  if(rotate_180_)
+  if (rotate_180_)
   {
     tf::Quaternion flip;
     flip.setRPY(M_PI, 0, 0);
     rotation = rotation * flip;
+    base2cam.setRotation(rotation);
   }
+
+  if (publish_all_tf_)
+    tf_broadcaster_->sendTransform(tf::StampedTransform(base2cam, ros::Time::now(), base_link_, "camVIS"));
 
   // print as static transform publisher
   // TODO output only once, maybe using an average or most probable tf since checkerboard detection and line detection
