@@ -31,24 +31,35 @@
  ***************************************************************************/
 
 #include "tuw_camera_calibration_node.h"
+#include <camera_info_manager/camera_info_manager.h>
 
 #include <cv_bridge/cv_bridge.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/calib3d.hpp>
 
-using namespace cv;
-using std::vector;
-using std::string;
 
-void callbackButtonUseImage ( int i, void* param ) {
-    CameraCalibrationNode *node = ( CameraCalibrationNode * ) param;
-    node->calibrate_ = true;
+void callbackMouseImage ( int event, int x, int y, int flags, void* ptr ) {
+    CameraCalibrationNode *camera_calibartion = ( CameraCalibrationNode* ) ptr;
+    if ( event == CV_EVENT_LBUTTONDOWN ) {
+        camera_calibartion->use_current_image_ = true;
+    }
+    //if ( event == CV_EVENT_LBUTTONUP )
+    //if ( event == CV_EVENT_MBUTTONUP )
 }
 
-void callbackButtonCalibrate ( int i, void *node ) {
-    CameraCalibrationNode *camera_calibartion = ( CameraCalibrationNode* ) node;
+void callbackButtonUseImage ( int state, void* ptr ) {
+    CameraCalibrationNode *camera_calibartion = ( CameraCalibrationNode* ) ptr;
     camera_calibartion->use_current_image_ = true;
+}
+
+void callbackButtonCalibrate ( int i, void *ptr ) {
+    CameraCalibrationNode *camera_calibartion = ( CameraCalibrationNode* ) ptr;
+    camera_calibartion->calibrate_ = true;
+}
+void callbackButtonReset ( int i, void *ptr ) {
+    CameraCalibrationNode *camera_calibartion = ( CameraCalibrationNode* ) ptr;
+    camera_calibartion->reset_ = true;
 }
 
 CameraCalibrationNode::CameraCalibrationNode() : nh_private_ ( "~" ) {
@@ -64,22 +75,69 @@ CameraCalibrationNode::CameraCalibrationNode() : nh_private_ ( "~" ) {
 
     sub_img_ = it_.subscribe ( "image", 1, &CameraCalibrationNode::callbackImage, this );
     wnd_detection_ = "Detection - " + nh_private_.getNamespace();
+    wnd_images_ = "Images - " + nh_private_.getNamespace();
     cv::namedWindow ( wnd_detection_ );
+    cv::namedWindow ( wnd_images_ );
+    cv::moveWindow ( wnd_images_, config_.thumb_width*config_.thumb_cols*1.1, 0 );
     cvCreateButton ( "Use Image",callbackButtonUseImage, this, CV_PUSH_BUTTON ,0 );
     cvCreateButton ( "Calibrate",callbackButtonCalibrate, this, CV_PUSH_BUTTON ,0 );
+    cvCreateButton ( "Reset",callbackButtonReset, this, CV_PUSH_BUTTON ,0 );
+    cv::setMouseCallback ( wnd_detection_, callbackMouseImage, this );
+    
 
 }
 
+
+void CameraCalibrationNode::reset() {
+  image_corners_.clear();
+  image_calibration_corners_.clear();
+  object_calibration_corners_.clear();
+  images_gray_.clear();
+  images_rgb_.clear();
+  image_used_.create(config_.thumb_width*3/4, config_.thumb_width*config_.thumb_cols, CV_8UC3);
+  image_used_.setTo(0xFF);
+}
 void CameraCalibrationNode::calibrate() {
-    
-    cv::Mat cameraMatrix;
-    cv::Mat distCoeffs;
-    std::vector<cv::Mat> rvecs;
-    std::vector<cv::Mat> tvecs;
-    int flags = CV_CALIB_USE_INTRINSIC_GUESS;
-    cv::TermCriteria criteria( TermCriteria::COUNT + TermCriteria::EPS, 30, double(2.22044604925031308085e-16L) );
-    calibrateCamera ( object_calibration_corners_, image_calibration_corners_, image_grey_.size(), cameraMatrix, distCoeffs, rvecs, tvecs, flags, criteria );
-    std::cout << cameraMatrix;
+    calibrate_ = false;
+    if ( image_corners_.empty() ) {
+        return;
+    }
+    int flags = 0;
+    cv::TermCriteria criteria ( cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30, double ( 2.22044604925031308085e-16L ) );
+    cv::calibrateCamera ( object_calibration_corners_, image_calibration_corners_, image_grey_.size(), cameraMatrix_, distCoeffs_, rvecs_, tvecs_, flags, criteria );
+    projectionMatrix_ = cv::getOptimalNewCameraMatrix ( cameraMatrix_, distCoeffs_, image_grey_.size(), config_.projection_alpha );
+
+    cameraInfo_.height = image_grey_.cols;
+    cameraInfo_.width = image_grey_.rows;
+
+    cameraInfo_.D.resize ( distCoeffs_.cols );
+    for ( size_t c = 0; c < distCoeffs_.cols; c++ ) {
+        cameraInfo_.D[c] = distCoeffs_ ( 0, c );
+    }
+
+    for ( size_t i = 0; i < 9; i++ ) {
+        cameraInfo_.K[i] = cameraMatrix_ ( i );
+    }
+
+    for ( size_t i = 0; i < 12; i++ ) {
+        cameraInfo_.P[i] = projectionMatrix_ ( i );
+    }
+
+
+    printf ( "\n" );
+    printf ( " cameraMatrix\n" );
+    for ( int r = 0; r < cameraMatrix_.rows; r++ ) {
+        printf ( " %-12.4f, %-12.4f, %-12.4f\n", cameraMatrix_ ( r, 0 ), cameraMatrix_ ( r, 1 ), cameraMatrix_ ( r, 2 ) );
+    }
+    printf ( " distCoeffs\n" );
+    for ( int c = 0; c < distCoeffs_.cols; c++ ) {
+        printf ( " %-12.4f%s", distCoeffs_ ( 0, c ), ( c!=distCoeffs_.cols-1 ) ?" ":"\n" );
+    }
+    printf ( " projectionMatrix\n" );
+    for ( int r = 0; r < projectionMatrix_.rows; r++ ) {
+        printf ( " %-12.4f, %-12.4f, %-12.4f, %-12.4f\n", projectionMatrix_ ( r, 0 ), projectionMatrix_ ( r, 1 ), projectionMatrix_ ( r, 2 ), projectionMatrix_ ( r, 3 ) );
+    }
+
 }
 
 void CameraCalibrationNode::callbackConfig ( tuw_camera_calibration::CameraCalibrationConfig &_config, uint32_t _level ) {
@@ -88,7 +146,7 @@ void CameraCalibrationNode::callbackConfig ( tuw_camera_calibration::CameraCalib
     object_corners_.clear();
     for ( int i = 0; i < config_.checkerboard_rows; i++ ) {
         for ( int j = 0; j < config_.checkerboard_columns; j++ ) {
-            object_corners_.push_back ( Point3f ( float ( i * config_.checkerboard_square_size ), float ( j * config_.checkerboard_square_size ), 0.f ) );
+            object_corners_.push_back ( cv::Point3f ( float ( i * config_.checkerboard_square_size ), float ( j * config_.checkerboard_square_size ), 0.f ) );
         }
     }
 }
@@ -98,15 +156,17 @@ void CameraCalibrationNode::callbackConfig ( tuw_camera_calibration::CameraCalib
  */
 void CameraCalibrationNode::callbackImage ( const sensor_msgs::ImageConstPtr& image_msg ) {
 
-    Size patternsize ( config_.checkerboard_columns, config_.checkerboard_rows );
+
+    if ( reset_ ) {
+        reset_ = false;
+        reset();
+    }
+    cv::Size patternsize ( config_.checkerboard_columns, config_.checkerboard_rows );
     cv_bridge::CvImagePtr input_bridge;
     try {
         input_bridge = cv_bridge::toCvCopy ( image_msg, sensor_msgs::image_encodings::MONO8 );
-        if ( config_.rotate_camera_image_180 ) {
-            cv::flip ( input_bridge->image, image_grey_, -1 );
-        } else {
-            image_grey_ = input_bridge->image;
-        }
+        image_grey_ = input_bridge->image;
+
         cvtColor ( image_grey_, image_rgb_, CV_GRAY2BGR, 0 );
 
     } catch ( cv_bridge::Exception& ex ) {
@@ -115,31 +175,59 @@ void CameraCalibrationNode::callbackImage ( const sensor_msgs::ImageConstPtr& im
     }
 
     int flags = 0;
-    if ( config_.adaptive_thresh ) flags += CV_CALIB_CB_ADAPTIVE_THRESH;
-    if ( config_.normalize_image ) flags += CV_CALIB_CB_NORMALIZE_IMAGE;
-    if ( config_.filter_quads ) flags += CV_CALIB_CB_FILTER_QUADS;
-    if ( config_.fast_check ) flags += CALIB_CB_FAST_CHECK;
+    if ( config_.adaptive_thresh ) {
+        flags += CV_CALIB_CB_ADAPTIVE_THRESH;
+    }
+    if ( config_.normalize_image ) {
+        flags += CV_CALIB_CB_NORMALIZE_IMAGE;
+    }
+    if ( config_.filter_quads ) {
+        flags += CV_CALIB_CB_FILTER_QUADS;
+    }
+    if ( config_.fast_check ) {
+        flags += CV_CALIB_CB_FAST_CHECK;
+    }
     bool patternfound = findChessboardCorners ( image_grey_, patternsize, image_corners_, flags );
 
     if ( patternfound ) {
         if ( config_.subpixelfit ) {
 
             int winSize = config_.subpixelfit_window_size;
-            cornerSubPix ( image_grey_, image_corners_, Size ( winSize, winSize ), Size ( -1, -1 ), TermCriteria ( CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1 ) );
+            cv::TermCriteria criteria ( CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1 );
+            cv::cornerSubPix ( image_grey_, image_corners_, cv::Size ( winSize, winSize ), cv::Size ( -1, -1 ),  criteria );
         }
 
+
+        cv::drawChessboardCorners ( image_rgb_, patternsize, cv::Mat ( image_corners_ ), patternfound );
         if ( use_current_image_ ) {
             use_current_image_ = false;
+            images_gray_.push_back ( image_grey_.clone() );
+            images_rgb_.push_back ( image_rgb_.clone() );
+
             image_calibration_corners_.push_back ( image_corners_ );
             object_calibration_corners_.push_back ( object_corners_ );
+            double scale = ( ( double ) config_.thumb_width ) / ( double ) image_grey_.cols;
+            cv::Size size ( config_.thumb_width, image_grey_.rows * scale );
+            image_used_.create ( size.height* ( images_gray_.size() /config_.thumb_cols+1 ), size.width*config_.thumb_cols, CV_8UC3 );
+	    image_used_.setTo(0xFF);
+            for ( int i = 0; i < images_gray_.size(); i++ ) {
+                cv::Rect rect ( 0,0,size.width, size.height );
+                rect.x = size.width * ( i%config_.thumb_cols );
+                rect.y = size.height * ( i/config_.thumb_cols );
+                cv::Mat img = image_used_ ( rect );
+                cv::resize ( images_rgb_[i], img, size );
+            }
         }
     }
 
-    if ( calibrate_ ) this->calibrate();
+    if ( calibrate_ ) {
+        this->calibrate();
+    }
 
-
-    drawChessboardCorners ( image_rgb_, patternsize, Mat ( image_corners_ ), patternfound );
     cv::imshow ( wnd_detection_, image_rgb_ );
+    if ( !image_used_.empty() ) {
+        cv::imshow ( wnd_images_, image_used_ );
+    }
     cv::waitKey ( config_.show_camera_image_waitkey );
 
 }

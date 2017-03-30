@@ -41,7 +41,7 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
 
-  <run_depend>tuw_checkerboard</run_depend>
+  <run_depend>tuw_camera_calibration</run_depend>
   <run_depend>tuw_laser2corner</run_depend>
   <run_depend>tuw_calib_base2cam</run_depend>
   <run_depend>tuw_linedetection</run_depend>

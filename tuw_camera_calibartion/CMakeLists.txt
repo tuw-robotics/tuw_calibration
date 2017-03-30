@@ -6,15 +6,14 @@ add_compile_options(-std=c++14) ## for c++ 2014
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  std_msgs
   cv_bridge
+  sensor_msgs
   dynamic_reconfigure
   image_geometry
   image_transport
   image_view
-  tf
-  marker_msgs
   dynamic_reconfigure
+  camera_info_manager
 )
 
 find_package(OpenCV REQUIRED)

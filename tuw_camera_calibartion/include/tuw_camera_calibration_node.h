@@ -1,9 +1,9 @@
 /***************************************************************************
- * Copyright (c) 2017 
+ * Copyright (c) 2017
  * Florian Beck <florian.beck@tuwien.ac.at>
  * Markus Bader <markus.bader@tuwien.ac.at>
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  * 1. Redistributions of source code must retain the above copyright
@@ -17,7 +17,7 @@
  * 4. Neither the name of the TU-Wien nor the
  *    names of its contributors may be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY Markus Bader ''AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -43,36 +43,50 @@
 #include <tf/transform_broadcaster.h>
 
 #include <sensor_msgs/image_encodings.h>
+#include <sensor_msgs/CameraInfo.h>
 #include <dynamic_reconfigure/server.h>
 #include <tuw_camera_calibration/CameraCalibrationConfig.h>
 
 
-class CameraCalibrationNode 
+class CameraCalibrationNode
 {
 public:
-  CameraCalibrationNode(); // Constructor
-  bool use_current_image_;
-  bool calibrate_;
+    CameraCalibrationNode(); // Constructor
+    bool use_current_image_;
+    bool calibrate_;
+    bool reset_;
 private:
-  
-  ros::NodeHandle nh_;
-  ros::NodeHandle nh_private_;
-  image_transport::Subscriber sub_img_;
-  cv::Mat image_grey_;
-  cv::Mat image_rgb_;
-  tuw_camera_calibration::CameraCalibrationConfig config_;
-  std::string checkerboard_frame_id_;
-  std::vector<cv::Point2f> image_corners_;
-  std::vector<cv::Point3f> object_corners_;
-  std::vector<std::vector<cv::Point2f> > image_calibration_corners_;
-  std::vector<std::vector<cv::Point3f> > object_calibration_corners_;
-  std::string wnd_detection_;
-  
-  void calibrate();
-  void callbackImage(const sensor_msgs::ImageConstPtr& image_msg);
-  dynamic_reconfigure::Server<tuw_camera_calibration::CameraCalibrationConfig>* reconfigureServer_; ///< parameter server stuff
-  dynamic_reconfigure::Server<tuw_camera_calibration::CameraCalibrationConfig>::CallbackType reconfigureFnc_;///< parameter server stuff
-  void callbackConfig ( tuw_camera_calibration::CameraCalibrationConfig &_config, uint32_t _level ); ///< callback function on incoming parameter changes
+
+    ros::NodeHandle nh_;
+    ros::NodeHandle nh_private_;
+    image_transport::Subscriber sub_img_;
+    sensor_msgs::CameraInfo cameraInfo_;
+    cv::Mat image_grey_;
+    cv::Mat image_rgb_;
+    cv::Mat image_used_;
+    tuw_camera_calibration::CameraCalibrationConfig config_;
+    image_geometry::PinholeCameraModel cam_model_;
+    std::string checkerboard_frame_id_;
+    cv::Mat_<float> cameraMatrix_;
+    cv::Mat_<float> projectionMatrix_;
+    cv::Mat_<float>  distCoeffs_;
+    std::vector<cv::Mat> rvecs_;
+    std::vector<cv::Mat> tvecs_;
+    std::vector<cv::Point2f> image_corners_;
+    std::vector<cv::Point3f> object_corners_;
+    std::vector<std::vector<cv::Point2f> > image_calibration_corners_;
+    std::vector<std::vector<cv::Point3f> > object_calibration_corners_;
+    std::string wnd_detection_;
+    std::string wnd_images_;
+    std::vector<cv::Mat> images_gray_;
+    std::vector<cv::Mat> images_rgb_;
+
+    void calibrate();
+    void reset();
+    void callbackImage ( const sensor_msgs::ImageConstPtr& image_msg );
+    dynamic_reconfigure::Server<tuw_camera_calibration::CameraCalibrationConfig>* reconfigureServer_; ///< parameter server stuff
+    dynamic_reconfigure::Server<tuw_camera_calibration::CameraCalibrationConfig>::CallbackType reconfigureFnc_;///< parameter server stuff
+    void callbackConfig ( tuw_camera_calibration::CameraCalibrationConfig &_config, uint32_t _level ); ///< callback function on incoming parameter changes
 };
 
 #endif //TUW_CAMERA_CALIBRATION_NODE_H
