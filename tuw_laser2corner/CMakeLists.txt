@@ -143,8 +143,6 @@ add_executable(tuw_laser2corner_node src/laser2corner_node.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(tuw_laser2corner_node
    ${catkin_LIBRARIES}
-   tuw_geometry
-   tuw_geometry_msgs
 )
 
 #############

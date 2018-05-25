@@ -145,8 +145,6 @@ add_dependencies(linesegment2d_detector_node ${${PROJECT_NAME}_EXPORTED_TARGETS}
 ## Specify libraries to link a library or executable target against
 target_link_libraries(linesegment2d_detector_node
    ${catkin_LIBRARIES}
-   tuw_geometry
-   tuw_geometry_msgs
 )
 
 #############
